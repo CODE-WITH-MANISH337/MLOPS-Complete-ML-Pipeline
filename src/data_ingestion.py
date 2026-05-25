@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 import logging
+import yaml
 
 data_dir='logs'
 os.makedirs(data_dir,exist_ok=True)
@@ -26,6 +27,15 @@ file_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
+def load_yaml(file_path:str):
+    try:
+        with open(file_path,'r') as f:
+            params=yaml.safe_load(f)
+        
+        logger.debug('Yaml File Loaded Sucessfully %s',file_path)
+        return params
+    except Exception as e:
+        logger.error("Falied to load the Yaml File %s",file_path)    
 
 def load_data(data_url:str)->pd.DataFrame:
     """Load data from a csv file"""
@@ -69,6 +79,8 @@ def save_data(train_data:pd.DataFrame,test_data:pd.DataFrame,data_path:str)->Non
 
 def main():
     try:
+        # params=load_data('params.yaml')
+        # test_size=params['data_ingestion']['test_size']
         test_size=0.2
         data_path='https://raw.githubusercontent.com/CODE-WITH-MANISH337/data_host/refs/heads/main/spam.csv'
         df=load_data(data_url=data_path)
