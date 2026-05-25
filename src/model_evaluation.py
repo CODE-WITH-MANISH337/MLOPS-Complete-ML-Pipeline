@@ -5,7 +5,8 @@ from sklearn.metrics import accuracy_score,precision_score,recall_score,roc_auc_
 import json
 import pickle
 import numpy as np
-
+from dvclive import Live
+import yaml
 
 log_dir='logs'
 os.makedirs(log_dir,exist_ok=True)
@@ -28,6 +29,16 @@ file_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
+def load_yaml(file_path:str):
+    """Loading the yaml file"""
+    try:
+        with open(file_path,'r') as f:
+            params=yaml.safe_load(f)
+        
+        logger.debug('Yaml File Loaded Sucessfully %s',file_path)
+        return params
+    except Exception as e:
+        logger.error("Falied to load the Yaml File %s",file_path) 
 
 def load_model(file_path:str):
     """Load the trained model form file"""
@@ -95,12 +106,20 @@ def save(file_path:str,metrics:dict):
 
 def main():
     try:
+        params=load_yaml(file_path='params.yaml')
         logger.debug("Process Started")
         clf=load_model(file_path='./models/model.pkl')
         test_data=load_data(file_path='./data/processed/test_tfidf.csv')
         X_test=test_data.iloc[:,:-1]
         y_test=test_data.iloc[:,-1]    
         metrics=evaluate_model(clf,X_test,y_test)
+
+        with Live(save_dvc_exp=True) as live:
+            live.log_metric('accuracy',metrics['accuracy'])
+            live.log_metric('precision', metrics['recall'])
+            live.log_metric('recall',metrics['precision'])
+
+            live.log_params(params)
         save(file_path='reports/metrics.json',metrics=metrics)
         logger.debug('All Set')
     except Exception as e:
